@@ -138,12 +138,15 @@ def logout():
 @login_required
 @no_cache
 def flights():
-    """View all flights"""
+    """View all active flights"""
     db = get_db()
     flights = []
+    airports = []
 
     if db:
         cursor = db.cursor()
+
+        # Get all active flights
         cursor.execute("""
             SELECT f.*,
                    a1.airport_code as departure_code, a1.city as departure_city,
@@ -151,55 +154,306 @@ def flights():
             FROM flights f
             JOIN airports a1 ON f.departure_airport_id = a1.airport_id
             JOIN airports a2 ON f.arrival_airport_id = a2.airport_id
+            WHERE f.is_archived = FALSE
             ORDER BY f.departure_time DESC
         """)
         flights = cursor.fetchall()
+
+        # Get all airports for dropdown
+        cursor.execute("SELECT * FROM airports WHERE is_archived = FALSE ORDER BY airport_code")
+        airports = cursor.fetchall()
+
         cursor.close()
 
-    return render_template('flights.html', flights=flights)
+    return render_template('flights.html', flights=flights, airports=airports)
+
+@app.route('/flights/add', methods=['POST'])
+@login_required
+def add_flight():
+    """Add a new flight"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO flights (flight_number, departure_airport_id, arrival_airport_id,
+                               departure_time, arrival_time, aircraft_type, status, gate)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            request.form['flight_number'],
+            request.form['departure_airport_id'],
+            request.form['arrival_airport_id'],
+            request.form['departure_time'],
+            request.form['arrival_time'],
+            request.form['aircraft_type'],
+            request.form['status'],
+            request.form['gate']
+        ))
+        db.commit()
+        cursor.close()
+        flash('Flight added successfully!', 'success')
+    except Exception as e:
+        flash(f'Error adding flight: {str(e)}', 'error')
+
+    return redirect(url_for('flights'))
+
+@app.route('/flights/edit/<int:flight_id>', methods=['POST'])
+@login_required
+def edit_flight(flight_id):
+    """Edit an existing flight"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE flights
+            SET flight_number = %s, departure_airport_id = %s, arrival_airport_id = %s,
+                departure_time = %s, arrival_time = %s, aircraft_type = %s,
+                status = %s, gate = %s
+            WHERE flight_id = %s AND is_archived = FALSE
+        """, (
+            request.form['flight_number'],
+            request.form['departure_airport_id'],
+            request.form['arrival_airport_id'],
+            request.form['departure_time'],
+            request.form['arrival_time'],
+            request.form['aircraft_type'],
+            request.form['status'],
+            request.form['gate'],
+            flight_id
+        ))
+        db.commit()
+        cursor.close()
+        flash('Flight updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating flight: {str(e)}', 'error')
+
+    return redirect(url_for('flights'))
+
+@app.route('/flights/delete/<int:flight_id>', methods=['POST'])
+@login_required
+def delete_flight(flight_id):
+    """Archive a flight (soft delete)"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE flights
+            SET is_archived = TRUE, archived_at = NOW(), archived_by = %s
+            WHERE flight_id = %s
+        """, (current_user.id, flight_id))
+        db.commit()
+        cursor.close()
+        flash('Flight archived successfully!', 'success')
+    except Exception as e:
+        flash(f'Error archiving flight: {str(e)}', 'error')
+
+    return redirect(url_for('flights'))
 
 @app.route('/customers')
 @login_required
 @no_cache
 def customers():
-    """View all customers"""
+    """View all active customers"""
     db = get_db()
     customers = []
 
     if db:
         cursor = db.cursor()
-        cursor.execute("SELECT * FROM customers ORDER BY last_name, first_name")
+        cursor.execute("SELECT * FROM customers WHERE is_archived = FALSE ORDER BY last_name, first_name")
         customers = cursor.fetchall()
         cursor.close()
 
     return render_template('customers.html', customers=customers)
 
+@app.route('/customers/add', methods=['POST'])
+@login_required
+def add_customer():
+    """Add a new customer"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO customers (first_name, last_name, email, phone,
+                                 frequent_flyer_number, date_of_birth)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            request.form['first_name'],
+            request.form['last_name'],
+            request.form['email'],
+            request.form['phone'],
+            request.form['frequent_flyer_number'],
+            request.form['date_of_birth'] if request.form['date_of_birth'] else None
+        ))
+        db.commit()
+        cursor.close()
+        flash('Customer added successfully!', 'success')
+    except Exception as e:
+        flash(f'Error adding customer: {str(e)}', 'error')
+
+    return redirect(url_for('customers'))
+
+@app.route('/customers/edit/<int:customer_id>', methods=['POST'])
+@login_required
+def edit_customer(customer_id):
+    """Edit an existing customer"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE customers
+            SET first_name = %s, last_name = %s, email = %s, phone = %s,
+                frequent_flyer_number = %s, date_of_birth = %s
+            WHERE customer_id = %s AND is_archived = FALSE
+        """, (
+            request.form['first_name'],
+            request.form['last_name'],
+            request.form['email'],
+            request.form['phone'],
+            request.form['frequent_flyer_number'],
+            request.form['date_of_birth'] if request.form['date_of_birth'] else None,
+            customer_id
+        ))
+        db.commit()
+        cursor.close()
+        flash('Customer updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating customer: {str(e)}', 'error')
+
+    return redirect(url_for('customers'))
+
+@app.route('/customers/delete/<int:customer_id>', methods=['POST'])
+@login_required
+def delete_customer(customer_id):
+    """Archive a customer (soft delete)"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE customers
+            SET is_archived = TRUE, archived_at = NOW(), archived_by = %s
+            WHERE customer_id = %s
+        """, (current_user.id, customer_id))
+        db.commit()
+        cursor.close()
+        flash('Customer archived successfully!', 'success')
+    except Exception as e:
+        flash(f'Error archiving customer: {str(e)}', 'error')
+
+    return redirect(url_for('customers'))
+
 @app.route('/airports')
 @login_required
 @no_cache
 def airports():
-    """View all airports/destinations"""
+    """View all active airports/destinations"""
     db = get_db()
     airports = []
 
     if db:
         cursor = db.cursor()
-        cursor.execute("SELECT * FROM airports ORDER BY country, city")
+        cursor.execute("SELECT * FROM airports WHERE is_archived = FALSE ORDER BY country, city")
         airports = cursor.fetchall()
         cursor.close()
 
     return render_template('airports.html', airports=airports)
 
+@app.route('/airports/add', methods=['POST'])
+@login_required
+def add_airport():
+    """Add a new airport"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO airports (airport_code, airport_name, city, state, country, timezone)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            request.form['airport_code'],
+            request.form['airport_name'],
+            request.form['city'],
+            request.form['state'] if request.form['state'] else None,
+            request.form['country'],
+            request.form['timezone']
+        ))
+        db.commit()
+        cursor.close()
+        flash('Airport added successfully!', 'success')
+    except Exception as e:
+        flash(f'Error adding airport: {str(e)}', 'error')
+
+    return redirect(url_for('airports'))
+
+@app.route('/airports/edit/<int:airport_id>', methods=['POST'])
+@login_required
+def edit_airport(airport_id):
+    """Edit an existing airport"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE airports
+            SET airport_code = %s, airport_name = %s, city = %s,
+                state = %s, country = %s, timezone = %s
+            WHERE airport_id = %s AND is_archived = FALSE
+        """, (
+            request.form['airport_code'],
+            request.form['airport_name'],
+            request.form['city'],
+            request.form['state'] if request.form['state'] else None,
+            request.form['country'],
+            request.form['timezone'],
+            airport_id
+        ))
+        db.commit()
+        cursor.close()
+        flash('Airport updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating airport: {str(e)}', 'error')
+
+    return redirect(url_for('airports'))
+
+@app.route('/airports/delete/<int:airport_id>', methods=['POST'])
+@login_required
+def delete_airport(airport_id):
+    """Archive an airport (soft delete)"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE airports
+            SET is_archived = TRUE, archived_at = NOW(), archived_by = %s
+            WHERE airport_id = %s
+        """, (current_user.id, airport_id))
+        db.commit()
+        cursor.close()
+        flash('Airport archived successfully!', 'success')
+    except Exception as e:
+        flash(f'Error archiving airport: {str(e)}', 'error')
+
+    return redirect(url_for('airports'))
+
 @app.route('/bookings')
 @login_required
 @no_cache
 def bookings():
-    """View all bookings"""
+    """View all active bookings"""
     db = get_db()
     bookings = []
+    customers = []
+    flights = []
 
     if db:
         cursor = db.cursor()
+
+        # Get all active bookings
         cursor.execute("""
             SELECT b.*,
                    c.first_name, c.last_name, c.email,
@@ -211,12 +465,110 @@ def bookings():
             JOIN flights f ON b.flight_id = f.flight_id
             JOIN airports a1 ON f.departure_airport_id = a1.airport_id
             JOIN airports a2 ON f.arrival_airport_id = a2.airport_id
+            WHERE b.is_archived = FALSE
             ORDER BY b.booking_date DESC
         """)
         bookings = cursor.fetchall()
+
+        # Get all customers for dropdown
+        cursor.execute("SELECT * FROM customers WHERE is_archived = FALSE ORDER BY last_name, first_name")
+        customers = cursor.fetchall()
+
+        # Get all flights for dropdown
+        cursor.execute("""
+            SELECT f.*,
+                   a1.airport_code as departure_code,
+                   a2.airport_code as arrival_code
+            FROM flights f
+            JOIN airports a1 ON f.departure_airport_id = a1.airport_id
+            JOIN airports a2 ON f.arrival_airport_id = a2.airport_id
+            WHERE f.is_archived = FALSE
+            ORDER BY f.departure_time DESC
+        """)
+        flights = cursor.fetchall()
+
         cursor.close()
 
-    return render_template('bookings.html', bookings=bookings)
+    return render_template('bookings.html', bookings=bookings, customers=customers, flights=flights)
+
+@app.route('/bookings/add', methods=['POST'])
+@login_required
+def add_booking():
+    """Add a new booking"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO bookings (booking_reference, customer_id, flight_id,
+                                seat_number, booking_status, price)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            request.form['booking_reference'],
+            request.form['customer_id'],
+            request.form['flight_id'],
+            request.form['seat_number'],
+            request.form['booking_status'],
+            request.form['price']
+        ))
+        db.commit()
+        cursor.close()
+        flash('Booking added successfully!', 'success')
+    except Exception as e:
+        flash(f'Error adding booking: {str(e)}', 'error')
+
+    return redirect(url_for('bookings'))
+
+@app.route('/bookings/edit/<int:booking_id>', methods=['POST'])
+@login_required
+def edit_booking(booking_id):
+    """Edit an existing booking"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE bookings
+            SET booking_reference = %s, customer_id = %s, flight_id = %s,
+                seat_number = %s, booking_status = %s, price = %s
+            WHERE booking_id = %s AND is_archived = FALSE
+        """, (
+            request.form['booking_reference'],
+            request.form['customer_id'],
+            request.form['flight_id'],
+            request.form['seat_number'],
+            request.form['booking_status'],
+            request.form['price'],
+            booking_id
+        ))
+        db.commit()
+        cursor.close()
+        flash('Booking updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating booking: {str(e)}', 'error')
+
+    return redirect(url_for('bookings'))
+
+@app.route('/bookings/delete/<int:booking_id>', methods=['POST'])
+@login_required
+def delete_booking(booking_id):
+    """Archive a booking (soft delete)"""
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE bookings
+            SET is_archived = TRUE, archived_at = NOW(), archived_by = %s
+            WHERE booking_id = %s
+        """, (current_user.id, booking_id))
+        db.commit()
+        cursor.close()
+        flash('Booking archived successfully!', 'success')
+    except Exception as e:
+        flash(f'Error archiving booking: {str(e)}', 'error')
+
+    return redirect(url_for('bookings'))
 
 @app.route('/about')
 def about():

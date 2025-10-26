@@ -5,21 +5,26 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
-            <h2><i class="fas fa-plane-departure me-2"></i>Flights</h2>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
+            <h2><i class="fas fa-plane-departure me-2"></i>Flight Management</h2>
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFlightModal">
+                    <i class="fas fa-plus me-2"></i>Add Flight
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Dashboard
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="row">
     <div class="col-12">
-        <div class="card">
+        <div class="card shadow">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover align-middle">
+                        <thead class="table-header">
                             <tr>
                                 <th>Flight #</th>
                                 <th>Route</th>
@@ -28,34 +33,47 @@
                                 <th>Aircraft</th>
                                 <th>Status</th>
                                 <th>Gate</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% if flights %}
                                 {% for flight in flights %}
                                 <tr>
-                                    <td><strong>{{ flight.flight_number }}</strong></td>
+                                    <td><strong class="text-primary">{{ flight.flight_number }}</strong></td>
                                     <td>
-                                        <i class="fas fa-plane-departure text-primary me-1"></i>
-                                        {{ flight.departure_code }} ({{ flight.departure_city }})
-                                        <i class="fas fa-arrow-right mx-2"></i>
-                                        <i class="fas fa-plane-arrival text-success me-1"></i>
-                                        {{ flight.arrival_code }} ({{ flight.arrival_city }})
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-primary me-2">{{ flight.departure_code }}</span>
+                                            <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                                            <span class="badge bg-success">{{ flight.arrival_code }}</span>
+                                        </div>
+                                        <small class="text-muted">{{ flight.departure_city }} → {{ flight.arrival_city }}</small>
                                     </td>
                                     <td>{{ flight.departure_time.strftime('%b %d, %Y %I:%M %p') }}</td>
                                     <td>{{ flight.arrival_time.strftime('%b %d, %Y %I:%M %p') }}</td>
-                                    <td>{{ flight.aircraft_type }}</td>
+                                    <td><i class="fas fa-plane me-1"></i>{{ flight.aircraft_type }}</td>
                                     <td>
-                                        <span class="badge bg-{% if flight.status == 'Scheduled' %}success{% elif flight.status == 'Delayed' %}warning{% else %}secondary{% endif %}">
+                                        <span class="badge bg-{% if flight.status == 'Scheduled' %}success{% elif flight.status == 'Delayed' %}warning{% elif flight.status == 'Cancelled' %}danger{% else %}secondary{% endif %}">
                                             {{ flight.status }}
                                         </span>
                                     </td>
-                                    <td>{{ flight.gate }}</td>
+                                    <td><span class="badge bg-info">{{ flight.gate }}</span></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editFlight({{ flight.flight_id }}, '{{ flight.flight_number }}', {{ flight.departure_airport_id }}, {{ flight.arrival_airport_id }}, '{{ flight.departure_time.strftime('%Y-%m-%dT%H:%M') }}', '{{ flight.arrival_time.strftime('%Y-%m-%dT%H:%M') }}', '{{ flight.aircraft_type }}', '{{ flight.status }}', '{{ flight.gate }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ flight.flight_id }}, '{{ flight.flight_number }}')">
+                                            <i class="fas fa-archive"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">No flights found</td>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                        No flights found
+                                    </td>
                                 </tr>
                             {% endif %}
                         </tbody>
@@ -66,22 +84,257 @@
     </div>
 </div>
 
+<!-- Add Flight Modal -->
+<div class="modal fade" id="addFlightModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add New Flight</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_flight') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Flight Number *</label>
+                            <input type="text" class="form-control" name="flight_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Aircraft Type *</label>
+                            <input type="text" class="form-control" name="aircraft_type" required placeholder="e.g., Boeing 737">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Departure Airport *</label>
+                            <select class="form-select" name="departure_airport_id" required>
+                                <option value="">Select Airport</option>
+                                {% for airport in airports %}
+                                <option value="{{ airport.airport_id }}">{{ airport.airport_code }} - {{ airport.city }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Arrival Airport *</label>
+                            <select class="form-select" name="arrival_airport_id" required>
+                                <option value="">Select Airport</option>
+                                {% for airport in airports %}
+                                <option value="{{ airport.airport_id }}">{{ airport.airport_code }} - {{ airport.city }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Departure Time *</label>
+                            <input type="datetime-local" class="form-control" name="departure_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Arrival Time *</label>
+                            <input type="datetime-local" class="form-control" name="arrival_time" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status *</label>
+                            <select class="form-select" name="status" required>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Boarding">Boarding</option>
+                                <option value="Departed">Departed</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gate *</label>
+                            <input type="text" class="form-control" name="gate" required placeholder="e.g., A12">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Flight</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Flight Modal -->
+<div class="modal fade" id="editFlightModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Flight</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editFlightForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Flight Number *</label>
+                            <input type="text" class="form-control" name="flight_number" id="edit_flight_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Aircraft Type *</label>
+                            <input type="text" class="form-control" name="aircraft_type" id="edit_aircraft_type" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Departure Airport *</label>
+                            <select class="form-select" name="departure_airport_id" id="edit_departure_airport_id" required>
+                                {% for airport in airports %}
+                                <option value="{{ airport.airport_id }}">{{ airport.airport_code }} - {{ airport.city }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Arrival Airport *</label>
+                            <select class="form-select" name="arrival_airport_id" id="edit_arrival_airport_id" required>
+                                {% for airport in airports %}
+                                <option value="{{ airport.airport_id }}">{{ airport.airport_code }} - {{ airport.city }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Departure Time *</label>
+                            <input type="datetime-local" class="form-control" name="departure_time" id="edit_departure_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Arrival Time *</label>
+                            <input type="datetime-local" class="form-control" name="arrival_time" id="edit_arrival_time" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status *</label>
+                            <select class="form-select" name="status" id="edit_status" required>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Boarding">Boarding</option>
+                                <option value="Departed">Departed</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gate *</label>
+                            <input type="text" class="form-control" name="gate" id="edit_gate" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Update Flight</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-archive me-2"></i>Archive Flight</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="deleteForm">
+                <div class="modal-body">
+                    <p>Are you sure you want to archive flight <strong id="deleteFlight Name"></strong>?</p>
+                    <p class="text-muted mb-0">This flight will be moved to the archive and can be restored later.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-archive me-2"></i>Archive</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
-    .table thead th {
+    .table-header {
         background: linear-gradient(90deg, #003d7a, #0078d4);
         color: white;
+    }
+
+    .table-header th {
         border: none;
         font-weight: 600;
+        padding: 1rem;
     }
 
     .table-hover tbody tr:hover {
         background-color: #f0f8ff;
+        transition: all 0.3s ease;
     }
 
     .btn-outline-secondary {
         border-radius: 25px;
         padding: 0.5rem 1.5rem;
     }
+
+    .btn-primary {
+        background: linear-gradient(45deg, #003d7a, #0078d4);
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(45deg, #002952, #005eb8);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 61, 122, 0.4);
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+
+    .modal-content {
+        border-radius: 15px;
+    }
+
+    .modal-header {
+        background: linear-gradient(90deg, #003d7a, #0078d4);
+        color: white;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
 </style>
+
+<script>
+function editFlight(id, flightNumber, depAirport, arrAirport, depTime, arrTime, aircraft, status, gate) {
+    document.getElementById('editFlightForm').action = '/flights/edit/' + id;
+    document.getElementById('edit_flight_number').value = flightNumber;
+    document.getElementById('edit_departure_airport_id').value = depAirport;
+    document.getElementById('edit_arrival_airport_id').value = arrAirport;
+    document.getElementById('edit_departure_time').value = depTime;
+    document.getElementById('edit_arrival_time').value = arrTime;
+    document.getElementById('edit_aircraft_type').value = aircraft;
+    document.getElementById('edit_status').value = status;
+    document.getElementById('edit_gate').value = gate;
+
+    var editModal = new bootstrap.Modal(document.getElementById('editFlightModal'));
+    editModal.show();
+}
+
+function confirmDelete(id, flightNumber) {
+    document.getElementById('deleteForm').action = '/flights/delete/' + id;
+    document.getElementById('deleteFlightName').textContent = flightNumber;
+
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
 
 {% endblock %}
