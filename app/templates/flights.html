@@ -10,6 +10,9 @@
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFlightModal">
                     <i class="fas fa-plus me-2"></i>Add Flight
                 </button>
+                <a href="{{ url_for('archive_flights') }}" class="btn btn-secondary">
+                    <i class="fas fa-archive me-2"></i>View Archive
+                </a>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Dashboard
                 </a>

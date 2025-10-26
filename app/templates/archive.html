@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-archive me-2"></i>Archive Center</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Archive Center:</strong> View and restore archived items. Archived items are hidden from main views but can be restored at any time.
+        </div>
+    </div>
+</div>
+
+<!-- Archive Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-plane fa-3x mb-3" style="color: #003d7a;"></i>
+                <h3 class="mb-1">{{ stats.flights }}</h3>
+                <p class="text-muted mb-3">Archived Flights</p>
+                <a href="{{ url_for('archive_flights') }}" class="btn btn-sm btn-primary">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x mb-3" style="color: #28a745;"></i>
+                <h3 class="mb-1">{{ stats.customers }}</h3>
+                <p class="text-muted mb-3">Archived Customers</p>
+                <a href="{{ url_for('archive_customers') }}" class="btn btn-sm btn-success">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-globe fa-3x mb-3" style="color: #ffc107;"></i>
+                <h3 class="mb-1">{{ stats.airports }}</h3>
+                <p class="text-muted mb-3">Archived Airports</p>
+                <a href="{{ url_for('archive_airports') }}" class="btn btn-sm btn-warning">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-ticket-alt fa-3x mb-3" style="color: #dc3545;"></i>
+                <h3 class="mb-1">{{ stats.bookings }}</h3>
+                <p class="text-muted mb-3">Archived Bookings</p>
+                <a href="{{ url_for('archive_bookings') }}" class="btn btn-sm btn-danger">View</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stats-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-outline-secondary {
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+    }
+</style>
+
+{% endblock %}

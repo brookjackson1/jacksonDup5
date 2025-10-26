@@ -570,6 +570,224 @@ def delete_booking(booking_id):
 
     return redirect(url_for('bookings'))
 
+# Archive Routes
+@app.route('/archive')
+@login_required
+@no_cache
+def archive():
+    """View all archived items"""
+    db = get_db()
+    stats = {
+        'flights': 0,
+        'customers': 0,
+        'airports': 0,
+        'bookings': 0
+    }
+
+    if db:
+        cursor = db.cursor()
+
+        # Count archived items
+        cursor.execute("SELECT COUNT(*) as count FROM flights WHERE is_archived = TRUE")
+        result = cursor.fetchone()
+        stats['flights'] = result['count'] if result else 0
+
+        cursor.execute("SELECT COUNT(*) as count FROM customers WHERE is_archived = TRUE")
+        result = cursor.fetchone()
+        stats['customers'] = result['count'] if result else 0
+
+        cursor.execute("SELECT COUNT(*) as count FROM airports WHERE is_archived = TRUE")
+        result = cursor.fetchone()
+        stats['airports'] = result['count'] if result else 0
+
+        cursor.execute("SELECT COUNT(*) as count FROM bookings WHERE is_archived = TRUE")
+        result = cursor.fetchone()
+        stats['bookings'] = result['count'] if result else 0
+
+        cursor.close()
+
+    return render_template('archive.html', stats=stats)
+
+@app.route('/archive/flights')
+@login_required
+@no_cache
+def archive_flights():
+    """View archived flights"""
+    db = get_db()
+    flights = []
+    airports = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT f.*,
+                   a1.airport_code as departure_code, a1.city as departure_city,
+                   a2.airport_code as arrival_code, a2.city as arrival_city,
+                   e.first_name as archived_by_name
+            FROM flights f
+            JOIN airports a1 ON f.departure_airport_id = a1.airport_id
+            JOIN airports a2 ON f.arrival_airport_id = a2.airport_id
+            LEFT JOIN employees e ON f.archived_by = e.employee_id
+            WHERE f.is_archived = TRUE
+            ORDER BY f.archived_at DESC
+        """)
+        flights = cursor.fetchall()
+        cursor.close()
+
+    return render_template('archive_flights.html', flights=flights)
+
+@app.route('/archive/customers')
+@login_required
+@no_cache
+def archive_customers():
+    """View archived customers"""
+    db = get_db()
+    customers = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT c.*, e.first_name as archived_by_name
+            FROM customers c
+            LEFT JOIN employees e ON c.archived_by = e.employee_id
+            WHERE c.is_archived = TRUE
+            ORDER BY c.archived_at DESC
+        """)
+        customers = cursor.fetchall()
+        cursor.close()
+
+    return render_template('archive_customers.html', customers=customers)
+
+@app.route('/archive/airports')
+@login_required
+@no_cache
+def archive_airports():
+    """View archived airports"""
+    db = get_db()
+    airports = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT a.*, e.first_name as archived_by_name
+            FROM airports a
+            LEFT JOIN employees e ON a.archived_by = e.employee_id
+            WHERE a.is_archived = TRUE
+            ORDER BY a.archived_at DESC
+        """)
+        airports = cursor.fetchall()
+        cursor.close()
+
+    return render_template('archive_airports.html', airports=airports)
+
+@app.route('/archive/bookings')
+@login_required
+@no_cache
+def archive_bookings():
+    """View archived bookings"""
+    db = get_db()
+    bookings = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT b.*,
+                   c.first_name, c.last_name, c.email,
+                   f.flight_number,
+                   a1.airport_code as departure_code,
+                   a2.airport_code as arrival_code,
+                   e.first_name as archived_by_name
+            FROM bookings b
+            JOIN customers c ON b.customer_id = c.customer_id
+            JOIN flights f ON b.flight_id = f.flight_id
+            JOIN airports a1 ON f.departure_airport_id = a1.airport_id
+            JOIN airports a2 ON f.arrival_airport_id = a2.airport_id
+            LEFT JOIN employees e ON b.archived_by = e.employee_id
+            WHERE b.is_archived = TRUE
+            ORDER BY b.archived_at DESC
+        """)
+        bookings = cursor.fetchall()
+        cursor.close()
+
+    return render_template('archive_bookings.html', bookings=bookings)
+
+# Restore Routes
+@app.route('/restore/flight/<int:flight_id>', methods=['POST'])
+@login_required
+def restore_flight(flight_id):
+    """Restore an archived flight"""
+    db = get_db()
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE flights
+            SET is_archived = FALSE, archived_at = NULL, archived_by = NULL
+            WHERE flight_id = %s
+        """, (flight_id,))
+        db.commit()
+        cursor.close()
+        flash('Flight restored successfully!', 'success')
+    except Exception as e:
+        flash(f'Error restoring flight: {str(e)}', 'error')
+    return redirect(url_for('archive_flights'))
+
+@app.route('/restore/customer/<int:customer_id>', methods=['POST'])
+@login_required
+def restore_customer(customer_id):
+    """Restore an archived customer"""
+    db = get_db()
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE customers
+            SET is_archived = FALSE, archived_at = NULL, archived_by = NULL
+            WHERE customer_id = %s
+        """, (customer_id,))
+        db.commit()
+        cursor.close()
+        flash('Customer restored successfully!', 'success')
+    except Exception as e:
+        flash(f'Error restoring customer: {str(e)}', 'error')
+    return redirect(url_for('archive_customers'))
+
+@app.route('/restore/airport/<int:airport_id>', methods=['POST'])
+@login_required
+def restore_airport(airport_id):
+    """Restore an archived airport"""
+    db = get_db()
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE airports
+            SET is_archived = FALSE, archived_at = NULL, archived_by = NULL
+            WHERE airport_id = %s
+        """, (airport_id,))
+        db.commit()
+        cursor.close()
+        flash('Airport restored successfully!', 'success')
+    except Exception as e:
+        flash(f'Error restoring airport: {str(e)}', 'error')
+    return redirect(url_for('archive_airports'))
+
+@app.route('/restore/booking/<int:booking_id>', methods=['POST'])
+@login_required
+def restore_booking(booking_id):
+    """Restore an archived booking"""
+    db = get_db()
+    try:
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE bookings
+            SET is_archived = FALSE, archived_at = NULL, archived_by = NULL
+            WHERE booking_id = %s
+        """, (booking_id,))
+        db.commit()
+        cursor.close()
+        flash('Booking restored successfully!', 'success')
+    except Exception as e:
+        flash(f'Error restoring booking: {str(e)}', 'error')
+    return redirect(url_for('archive_bookings'))
+
 @app.route('/about')
 def about():
     return render_template('about.html')

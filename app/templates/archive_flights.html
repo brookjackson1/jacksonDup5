@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-archive me-2"></i>Archived Flights</h2>
+            <div>
+                <a href="{{ url_for('flights') }}" class="btn btn-primary">
+                    <i class="fas fa-plane-departure me-2"></i>Active Flights
+                </a>
+                <a href="{{ url_for('archive') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Archive Center
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-header-archive">
+                            <tr>
+                                <th>Flight #</th>
+                                <th>Route</th>
+                                <th>Departure</th>
+                                <th>Aircraft</th>
+                                <th>Archived Date</th>
+                                <th>Archived By</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if flights %}
+                                {% for flight in flights %}
+                                <tr>
+                                    <td><strong class="text-muted">{{ flight.flight_number }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ flight.departure_code }}</span>
+                                        <i class="fas fa-arrow-right mx-1"></i>
+                                        <span class="badge bg-secondary">{{ flight.arrival_code }}</span>
+                                    </td>
+                                    <td>{{ flight.departure_time.strftime('%b %d, %Y %I:%M %p') }}</td>
+                                    <td>{{ flight.aircraft_type }}</td>
+                                    <td>{{ flight.archived_at.strftime('%b %d, %Y %I:%M %p') if flight.archived_at else 'N/A' }}</td>
+                                    <td>{{ flight.archived_by_name if flight.archived_by_name else 'System' }}</td>
+                                    <td class="text-end">
+                                        <form method="POST" action="{{ url_for('restore_flight', flight_id=flight.flight_id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-success" title="Restore">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                        No archived flights
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-header-archive {
+        background: linear-gradient(90deg, #6c757d, #5a6268);
+        color: white;
+    }
+
+    .table-header-archive th {
+        border: none;
+        font-weight: 600;
+        padding: 1rem;
+    }
+
+    .table-hover tbody tr {
+        opacity: 0.7;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+        opacity: 1;
+        transition: all 0.3s ease;
+    }
+</style>
+
+{% endblock %}
