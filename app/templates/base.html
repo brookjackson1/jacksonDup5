@@ -128,6 +128,26 @@
                         <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('flights') }}">
+                        <i class="fas fa-plane-departure me-1"></i>Flights
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('customers') }}">
+                        <i class="fas fa-users me-1"></i>Customers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('airports') }}">
+                        <i class="fas fa-globe me-1"></i>Destinations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('bookings') }}">
+                        <i class="fas fa-ticket-alt me-1"></i>Bookings
+                    </a>
+                </li>
                 {% endif %}
             </ul>
             <ul class="navbar-nav ms-auto">

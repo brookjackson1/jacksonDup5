@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-ticket-alt me-2"></i>Bookings</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Booking Ref</th>
+                                <th>Customer</th>
+                                <th>Flight</th>
+                                <th>Route</th>
+                                <th>Seat</th>
+                                <th>Status</th>
+                                <th>Price</th>
+                                <th>Booking Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if bookings %}
+                                {% for booking in bookings %}
+                                <tr>
+                                    <td><strong class="text-primary">{{ booking.booking_reference }}</strong></td>
+                                    <td>
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ booking.first_name }} {{ booking.last_name }}
+                                        <br>
+                                        <small class="text-muted">{{ booking.email }}</small>
+                                    </td>
+                                    <td><strong>{{ booking.flight_number }}</strong></td>
+                                    <td>
+                                        {{ booking.departure_code }}
+                                        <i class="fas fa-arrow-right mx-1"></i>
+                                        {{ booking.arrival_code }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ booking.seat_number }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if booking.booking_status == 'Confirmed' %}success{% elif booking.booking_status == 'Pending' %}warning{% else %}secondary{% endif %}">
+                                            {{ booking.booking_status }}
+                                        </span>
+                                    </td>
+                                    <td><strong>${{ "%.2f"|format(booking.price) }}</strong></td>
+                                    <td>{{ booking.booking_date.strftime('%b %d, %Y') }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">No bookings found</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table thead th {
+        background: linear-gradient(90deg, #dc3545, #c82333);
+        color: white;
+        border: none;
+        font-weight: 600;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #fff5f5;
+    }
+
+    .btn-outline-secondary {
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+    }
+</style>
+
+{% endblock %}

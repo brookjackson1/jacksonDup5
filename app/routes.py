@@ -134,6 +134,90 @@ def logout():
     response.headers['Expires'] = '-1'
     return response
 
+@app.route('/flights')
+@login_required
+@no_cache
+def flights():
+    """View all flights"""
+    db = get_db()
+    flights = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT f.*,
+                   a1.airport_code as departure_code, a1.city as departure_city,
+                   a2.airport_code as arrival_code, a2.city as arrival_city
+            FROM flights f
+            JOIN airports a1 ON f.departure_airport_id = a1.airport_id
+            JOIN airports a2 ON f.arrival_airport_id = a2.airport_id
+            ORDER BY f.departure_time DESC
+        """)
+        flights = cursor.fetchall()
+        cursor.close()
+
+    return render_template('flights.html', flights=flights)
+
+@app.route('/customers')
+@login_required
+@no_cache
+def customers():
+    """View all customers"""
+    db = get_db()
+    customers = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM customers ORDER BY last_name, first_name")
+        customers = cursor.fetchall()
+        cursor.close()
+
+    return render_template('customers.html', customers=customers)
+
+@app.route('/airports')
+@login_required
+@no_cache
+def airports():
+    """View all airports/destinations"""
+    db = get_db()
+    airports = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM airports ORDER BY country, city")
+        airports = cursor.fetchall()
+        cursor.close()
+
+    return render_template('airports.html', airports=airports)
+
+@app.route('/bookings')
+@login_required
+@no_cache
+def bookings():
+    """View all bookings"""
+    db = get_db()
+    bookings = []
+
+    if db:
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT b.*,
+                   c.first_name, c.last_name, c.email,
+                   f.flight_number,
+                   a1.airport_code as departure_code,
+                   a2.airport_code as arrival_code
+            FROM bookings b
+            JOIN customers c ON b.customer_id = c.customer_id
+            JOIN flights f ON b.flight_id = f.flight_id
+            JOIN airports a1 ON f.departure_airport_id = a1.airport_id
+            JOIN airports a2 ON f.arrival_airport_id = a2.airport_id
+            ORDER BY b.booking_date DESC
+        """)
+        bookings = cursor.fetchall()
+        cursor.close()
+
+    return render_template('bookings.html', bookings=bookings)
+
 @app.route('/about')
 def about():
     return render_template('about.html')
