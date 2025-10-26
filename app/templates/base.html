@@ -117,21 +117,32 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-gcsu">
-        <a class="navbar-brand" href="{{ url_for('index') }}">
-            <i class="fas fa-home me-2"></i>GCSU MIS Starter Kit
+        <a class="navbar-brand" href="{% if current_user.is_authenticated %}{{ url_for('dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
+            <i class="fas fa-plane me-2"></i>Delta Airlines Employee Portal
         </a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav me-auto">
+                {% if current_user.is_authenticated %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('about') }}">
-                        <i class="fas fa-info-circle me-1"></i>About
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                     </a>
                 </li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                {% if current_user.is_authenticated %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('examples.show_examples') }}">
-                        <i class="fas fa-database me-1"></i>Examples
+                    <span class="nav-link">
+                        <i class="fas fa-user me-1"></i>{{ current_user.first_name }}
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </nav>
