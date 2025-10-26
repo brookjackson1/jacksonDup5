@@ -53,7 +53,7 @@ def login_post():
         return redirect(url_for('login'))
 
     # Check credentials
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor()
     cursor.execute("SELECT * FROM employees WHERE email = %s", (email,))
     employee = cursor.fetchone()
     cursor.close()
@@ -95,7 +95,7 @@ def dashboard():
     stats = {}
 
     if db:
-        cursor = db.cursor(dictionary=True)
+        cursor = db.cursor()
 
         # Count total flights
         cursor.execute("SELECT COUNT(*) as count FROM flights")

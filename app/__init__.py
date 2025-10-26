@@ -19,7 +19,7 @@ def load_user(user_id):
     """Load user from database for Flask-Login"""
     db = get_db()
     if db:
-        cursor = db.cursor(dictionary=True)
+        cursor = db.cursor()
         cursor.execute("SELECT * FROM employees WHERE employee_id = %s", (user_id,))
         employee = cursor.fetchone()
         cursor.close()
