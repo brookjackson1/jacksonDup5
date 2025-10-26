@@ -5,21 +5,26 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
-            <h2><i class="fas fa-globe me-2"></i>Airports & Destinations</h2>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
+            <h2><i class="fas fa-globe me-2"></i>Airport Management</h2>
+            <div>
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addAirportModal">
+                    <i class="fas fa-plus me-2"></i>Add Airport
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Dashboard
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="row">
     <div class="col-12">
-        <div class="card">
+        <div class="card shadow">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover align-middle">
+                        <thead class="table-header">
                             <tr>
                                 <th>Code</th>
                                 <th>Airport Name</th>
@@ -27,29 +32,35 @@
                                 <th>State/Region</th>
                                 <th>Country</th>
                                 <th>Timezone</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% if airports %}
                                 {% for airport in airports %}
                                 <tr>
-                                    <td><strong class="text-primary">{{ airport.airport_code }}</strong></td>
+                                    <td><strong class="text-warning">{{ airport.airport_code }}</strong></td>
                                     <td>{{ airport.airport_name }}</td>
-                                    <td>
-                                        <i class="fas fa-map-marker-alt me-1"></i>
-                                        {{ airport.city }}
-                                    </td>
+                                    <td><i class="fas fa-map-marker-alt me-1"></i>{{ airport.city }}</td>
                                     <td>{{ airport.state if airport.state else 'N/A' }}</td>
-                                    <td>
-                                        <i class="fas fa-flag me-1"></i>
-                                        {{ airport.country }}
-                                    </td>
+                                    <td><i class="fas fa-flag me-1"></i>{{ airport.country }}</td>
                                     <td>{{ airport.timezone }}</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editAirport({{ airport.airport_id }}, '{{ airport.airport_code }}', '{{ airport.airport_name }}', '{{ airport.city }}', '{{ airport.state if airport.state else '' }}', '{{ airport.country }}', '{{ airport.timezone }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ airport.airport_id }}, '{{ airport.airport_code }}')">
+                                            <i class="fas fa-archive"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">No airports found</td>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                        No airports found
+                                    </td>
                                 </tr>
                             {% endif %}
                         </tbody>
@@ -60,22 +71,207 @@
     </div>
 </div>
 
+<!-- Add Airport Modal -->
+<div class="modal fade" id="addAirportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add New Airport</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_airport') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Airport Code *</label>
+                            <input type="text" class="form-control" name="airport_code" required maxlength="3" placeholder="ATL">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Airport Name *</label>
+                            <input type="text" class="form-control" name="airport_name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">City *</label>
+                            <input type="text" class="form-control" name="city" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">State/Region</label>
+                            <input type="text" class="form-control" name="state">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Country *</label>
+                            <input type="text" class="form-control" name="country" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Timezone *</label>
+                            <input type="text" class="form-control" name="timezone" required placeholder="EST">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning"><i class="fas fa-save me-2"></i>Save Airport</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Airport Modal -->
+<div class="modal fade" id="editAirportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Airport</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editAirportForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Airport Code *</label>
+                            <input type="text" class="form-control" name="airport_code" id="edit_airport_code" required maxlength="3">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Airport Name *</label>
+                            <input type="text" class="form-control" name="airport_name" id="edit_airport_name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">City *</label>
+                            <input type="text" class="form-control" name="city" id="edit_city" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">State/Region</label>
+                            <input type="text" class="form-control" name="state" id="edit_state">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Country *</label>
+                            <input type="text" class="form-control" name="country" id="edit_country" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Timezone *</label>
+                            <input type="text" class="form-control" name="timezone" id="edit_timezone" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning"><i class="fas fa-save me-2"></i>Update Airport</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-archive me-2"></i>Archive Airport</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="deleteForm">
+                <div class="modal-body">
+                    <p>Are you sure you want to archive airport <strong id="deleteAirportName"></strong>?</p>
+                    <p class="text-muted mb-0">This airport will be moved to the archive and can be restored later.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-archive me-2"></i>Archive</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
-    .table thead th {
+    .table-header {
         background: linear-gradient(90deg, #ffc107, #ff9800);
         color: white;
+    }
+
+    .table-header th {
         border: none;
         font-weight: 600;
+        padding: 1rem;
     }
 
     .table-hover tbody tr:hover {
         background-color: #fffbf0;
+        transition: all 0.3s ease;
     }
 
     .btn-outline-secondary {
         border-radius: 25px;
         padding: 0.5rem 1.5rem;
     }
+
+    .btn-warning {
+        background: linear-gradient(45deg, #ffc107, #ff9800);
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        color: white;
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(45deg, #e0a800, #f57c00);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        color: white;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+
+    .modal-content {
+        border-radius: 15px;
+    }
+
+    .modal-header {
+        background: linear-gradient(90deg, #ffc107, #ff9800);
+        color: white;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
 </style>
+
+<script>
+function editAirport(id, code, name, city, state, country, timezone) {
+    document.getElementById('editAirportForm').action = '/airports/edit/' + id;
+    document.getElementById('edit_airport_code').value = code;
+    document.getElementById('edit_airport_name').value = name;
+    document.getElementById('edit_city').value = city;
+    document.getElementById('edit_state').value = state;
+    document.getElementById('edit_country').value = country;
+    document.getElementById('edit_timezone').value = timezone;
+
+    var editModal = new bootstrap.Modal(document.getElementById('editAirportModal'));
+    editModal.show();
+}
+
+function confirmDelete(id, airportCode) {
+    document.getElementById('deleteForm').action = '/airports/delete/' + id;
+    document.getElementById('deleteAirportName').textContent = airportCode;
+
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
 
 {% endblock %}
