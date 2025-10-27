@@ -35,10 +35,6 @@ def load_user(user_id):
     return None
 
 # Register Blueprints
-from app.blueprints.examples import examples
-
-app.register_blueprint(examples, url_prefix='/example')
-
 from . import routes
 
 @app.before_request

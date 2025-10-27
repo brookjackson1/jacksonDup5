@@ -25,8 +25,14 @@
     <div class="col-12">
         <div class="card shadow">
             <div class="card-body">
+                <!-- Search Box -->
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="customerSearch" class="form-control" placeholder="Search customers by name, email, phone, frequent flyer number...">
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" id="customersTable">
                         <thead class="table-header">
                             <tr>
                                 <th>ID</th>
@@ -197,60 +203,22 @@
 </div>
 
 <style>
+    /* Custom styling for customers page */
     .table-header {
         background: linear-gradient(90deg, #28a745, #20c997);
-        color: white;
-    }
-
-    .table-header th {
-        border: none;
-        font-weight: 600;
-        padding: 1rem;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: #f0fff4;
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-secondary {
-        border-radius: 25px;
-        padding: 0.5rem 1.5rem;
-    }
-
-    .btn-success {
-        background: linear-gradient(45deg, #28a745, #20c997);
-        border: none;
-        border-radius: 25px;
-        padding: 0.5rem 1.5rem;
-    }
-
-    .btn-success:hover {
-        background: linear-gradient(45deg, #218838, #1aa179);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-    }
-
-    .card {
-        border: none;
-        border-radius: 15px;
-    }
-
-    .modal-content {
-        border-radius: 15px;
     }
 
     .modal-header {
         background: linear-gradient(90deg, #28a745, #20c997);
-        color: white;
-        border-top-left-radius: 15px;
-        border-top-right-radius: 15px;
-    }
-
-    .modal-header .btn-close {
-        filter: brightness(0) invert(1);
     }
 </style>
+
+<script>
+// Initialize search functionality when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    deltaApp.initTableSearch('customerSearch', 'customersTable');
+});
+</script>
 
 <script>
 function editCustomer(id, firstName, lastName, email, phone, ffNumber, dob) {

@@ -25,8 +25,14 @@
     <div class="col-12">
         <div class="card shadow">
             <div class="card-body">
+                <!-- Search Box -->
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="bookingSearch" class="form-control" placeholder="Search bookings by reference, customer, flight, route, status...">
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" id="bookingsTable">
                         <thead class="table-header">
                             <tr>
                                 <th>Ref #</th>
@@ -237,60 +243,22 @@
 </div>
 
 <style>
+    /* Custom styling for bookings page */
     .table-header {
         background: linear-gradient(90deg, #dc3545, #c82333);
-        color: white;
-    }
-
-    .table-header th {
-        border: none;
-        font-weight: 600;
-        padding: 1rem;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: #fff5f5;
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-secondary {
-        border-radius: 25px;
-        padding: 0.5rem 1.5rem;
-    }
-
-    .btn-danger {
-        background: linear-gradient(45deg, #dc3545, #c82333);
-        border: none;
-        border-radius: 25px;
-        padding: 0.5rem 1.5rem;
-    }
-
-    .btn-danger:hover {
-        background: linear-gradient(45deg, #c82333, #bd2130);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-    }
-
-    .card {
-        border: none;
-        border-radius: 15px;
-    }
-
-    .modal-content {
-        border-radius: 15px;
     }
 
     .modal-header {
         background: linear-gradient(90deg, #dc3545, #c82333);
-        color: white;
-        border-top-left-radius: 15px;
-        border-top-right-radius: 15px;
-    }
-
-    .modal-header .btn-close {
-        filter: brightness(0) invert(1);
     }
 </style>
+
+<script>
+// Initialize search functionality when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    deltaApp.initTableSearch('bookingSearch', 'bookingsTable');
+});
+</script>
 
 <script>
 function editBooking(id, bookingRef, customerId, flightId, seatNumber, status, price) {
