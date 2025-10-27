@@ -28,7 +28,81 @@
     </div>
 </div>
 
+<!-- Financial Metrics Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3"><i class="fas fa-dollar-sign me-2"></i>Financial Overview</h4>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card financial-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-money-bill-wave fa-3x mb-3" style="color: #28a745;"></i>
+                <h3 class="mb-1">${{ "%.2f"|format(stats.total_revenue) }}</h3>
+                <p class="text-muted mb-0">Total Revenue</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card financial-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x mb-3" style="color: #0078d4;"></i>
+                <h3 class="mb-1">${{ "%.2f"|format(stats.avg_booking_price) }}</h3>
+                <p class="text-muted mb-0">Avg. Booking Price</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card financial-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-3x mb-3" style="color: #28a745;"></i>
+                <h3 class="mb-1">${{ "%.2f"|format(stats.confirmed_revenue) }}</h3>
+                <p class="text-muted mb-0">Confirmed Revenue</p>
+                <small class="badge bg-success">{{ stats.confirmed_bookings }} Bookings</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card financial-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-3x mb-3" style="color: #ffc107;"></i>
+                <h3 class="mb-1">${{ "%.2f"|format(stats.pending_revenue) }}</h3>
+                <p class="text-muted mb-0">Pending Revenue</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Rate -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3"><i class="fas fa-percentage me-2"></i>Booking Confirmation Rate</h5>
+                <div class="progress" style="height: 30px;">
+                    <div class="progress-bar bg-success" role="progressbar"
+                         style="width: {{ "%.1f"|format(stats.confirmed_percentage) }}%;"
+                         aria-valuenow="{{ stats.confirmed_percentage }}"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        {{ "%.1f"|format(stats.confirmed_percentage) }}%
+                    </div>
+                </div>
+                <p class="text-muted mt-2 mb-0">
+                    <strong>{{ stats.confirmed_bookings }}</strong> out of <strong>{{ stats.total_bookings }}</strong> bookings are confirmed
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3"><i class="fas fa-chart-bar me-2"></i>System Statistics</h4>
+    </div>
+</div>
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card stats-card h-100">
@@ -108,6 +182,20 @@
 </div>
 
 <style>
+    .financial-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        border-left: 4px solid #28a745;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+
+    .financial-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        border-left-width: 6px;
+    }
+
     .stats-card {
         transition: all 0.3s ease;
         border: none;
@@ -117,6 +205,18 @@
     .stats-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .progress {
+        border-radius: 15px;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-bar {
+        border-radius: 15px;
+        font-size: 1rem;
+        font-weight: 600;
+        background: linear-gradient(90deg, #28a745, #20c997);
     }
 
     .btn-action {

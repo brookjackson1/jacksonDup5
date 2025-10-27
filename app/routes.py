@@ -98,24 +98,55 @@ def dashboard():
         cursor = db.cursor()
 
         # Count total flights
-        cursor.execute("SELECT COUNT(*) as count FROM flights")
+        cursor.execute("SELECT COUNT(*) as count FROM flights WHERE is_archived = FALSE")
         result = cursor.fetchone()
         stats['total_flights'] = result['count'] if result else 0
 
         # Count total customers
-        cursor.execute("SELECT COUNT(*) as count FROM customers")
+        cursor.execute("SELECT COUNT(*) as count FROM customers WHERE is_archived = FALSE")
         result = cursor.fetchone()
         stats['total_customers'] = result['count'] if result else 0
 
         # Count total airports
-        cursor.execute("SELECT COUNT(*) as count FROM airports")
+        cursor.execute("SELECT COUNT(*) as count FROM airports WHERE is_archived = FALSE")
         result = cursor.fetchone()
         stats['total_airports'] = result['count'] if result else 0
 
         # Count total bookings
-        cursor.execute("SELECT COUNT(*) as count FROM bookings")
+        cursor.execute("SELECT COUNT(*) as count FROM bookings WHERE is_archived = FALSE")
         result = cursor.fetchone()
         stats['total_bookings'] = result['count'] if result else 0
+
+        # Financial calculations
+        # Total revenue from all active bookings
+        cursor.execute("SELECT SUM(price) as total_revenue FROM bookings WHERE is_archived = FALSE")
+        result = cursor.fetchone()
+        stats['total_revenue'] = float(result['total_revenue']) if result and result['total_revenue'] else 0.0
+
+        # Average booking price
+        cursor.execute("SELECT AVG(price) as avg_price FROM bookings WHERE is_archived = FALSE")
+        result = cursor.fetchone()
+        stats['avg_booking_price'] = float(result['avg_price']) if result and result['avg_price'] else 0.0
+
+        # Revenue by booking status
+        cursor.execute("SELECT SUM(price) as confirmed_revenue FROM bookings WHERE booking_status = 'Confirmed' AND is_archived = FALSE")
+        result = cursor.fetchone()
+        stats['confirmed_revenue'] = float(result['confirmed_revenue']) if result and result['confirmed_revenue'] else 0.0
+
+        cursor.execute("SELECT SUM(price) as pending_revenue FROM bookings WHERE booking_status = 'Pending' AND is_archived = FALSE")
+        result = cursor.fetchone()
+        stats['pending_revenue'] = float(result['pending_revenue']) if result and result['pending_revenue'] else 0.0
+
+        # Count confirmed bookings
+        cursor.execute("SELECT COUNT(*) as count FROM bookings WHERE booking_status = 'Confirmed' AND is_archived = FALSE")
+        result = cursor.fetchone()
+        stats['confirmed_bookings'] = result['count'] if result else 0
+
+        # Calculate percentage of confirmed bookings
+        if stats['total_bookings'] > 0:
+            stats['confirmed_percentage'] = (stats['confirmed_bookings'] / stats['total_bookings']) * 100
+        else:
+            stats['confirmed_percentage'] = 0.0
 
         cursor.close()
 
